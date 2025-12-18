@@ -56,7 +56,9 @@ h1{
 }
 
 .board-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+
   justify-content: center;
 }
 
@@ -83,11 +85,11 @@ h1{
 }
 
 
-.square:contains("X") {
+.square.x {
   color: #1565c0;
 }
 
-.square:contains("O") {
+.square.o {
   color: #e53935;
 }
 
@@ -136,4 +138,10 @@ h1{
     height: 60px;
     font-size: 1.6rem;
   }
+}
+
+select{
+  width: 85px;
+  height: 25px;
+  font-size: large;
 }

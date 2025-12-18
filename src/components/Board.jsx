@@ -1,184 +1,220 @@
-import React, { useEffect, useState } from 'react'
-import Square from './Square'
+import { useEffect, useState } from "react"
+import Square from "./Square"
 
 const Board = () => {
-    const [square, setSquare] = useState(Array(9).fill(null))
-    const [isNext, setIsNext] = useState(true)
-    const [aiIsThinking, setAiIsThinking] = useState(false)
+  // ======================
+  // ESTADOS
+  // ======================
+  const [squares, setSquares] = useState(Array(9).fill(null))
+  const [isPlayerTurn, setIsPlayerTurn] = useState(true)
+  const [difficulty, setDifficulty] = useState("medium")
+  const [aiThinking, setAiThinking] = useState(false)
 
-    const winner = calculateWinner(square)
-    const draw = isDraw(square)
+  const winner = calculateWinner(squares)
+  const draw = squares.every(square => square !== null)
 
-    const handleClick = (i) => {
-        if (square[i] || winner || draw || !isNext) return
+  // ======================
+  // CLICK DO JOGADOR
+  // ======================
+  const handleClick = (index) => {
+    if (!isPlayerTurn || squares[index] || winner) return
 
-        const newSquare = square.slice()
-        newSquare[i] = "X"
+    const newSquares = [...squares]
+    newSquares[index] = "X"
+    setSquares(newSquares)
+    setIsPlayerTurn(false)
+  }
 
-        setSquare(newSquare)
-        setIsNext(false)
-    }
+  // ======================
+  // IA
+  // ======================
+  useEffect(() => {
+    if (!isPlayerTurn && !winner && !draw) {
+      setAiThinking(true)
 
-    const resetGame = () => {
-        setSquare(Array(9).fill(null))
-        setIsNext(true)
-    }
+      setTimeout(() => {
+        let move
 
-    useEffect(() => {
-        if (!isNext && !winner && !draw) {
-            setAiIsThinking(true)
-
-            setTimeout(() => {
-                aiMove(square, setSquare, setIsNext)
-                setAiIsThinking(false)
-            }, 800)
+        if (difficulty === "easy") {
+          move = aiEasyMove(squares)
+        } else if (difficulty === "medium") {
+          move = aiMediumMove(squares)
+        } else {
+          move = aiHardMove(squares)
         }
-    }, [isNext, square, winner, draw])
 
-    return (
-        <div>
-            <div className="status">
-                <div className="status-jogo">
-                    {winner ? (
-                        <p className="winner">O vencedor é {winner}!</p>
-                    ) : draw ? (
-                        <p className="draw">Deu velha 😐</p>
-                    ) : aiIsThinking ? (
-                        <p>IA está pensando...</p>
-                    ) : (
-                        <p>Próximo a jogar: X</p>
-                    )}
-                </div>
-
-                <div className="jogo">
-                    <div className="board-row">
-                        <Square value={square[0]} onClick={() => handleClick(0)} />
-                        <Square value={square[1]} onClick={() => handleClick(1)} />
-                        <Square value={square[2]} onClick={() => handleClick(2)} />
-                    </div>
-                    <div className="board-row">
-                        <Square value={square[3]} onClick={() => handleClick(3)} />
-                        <Square value={square[4]} onClick={() => handleClick(4)} />
-                        <Square value={square[5]} onClick={() => handleClick(5)} />
-                    </div>
-                    <div className="board-row">
-                        <Square value={square[6]} onClick={() => handleClick(6)} />
-                        <Square value={square[7]} onClick={() => handleClick(7)} />
-                        <Square value={square[8]} onClick={() => handleClick(8)} />
-                    </div>
-
-                    <button className="reset-button" onClick={resetGame}>
-                        Reiniciar Jogo
-                    </button>
-                </div>
-            </div>
-        </div>
-    )
-}
-
-
-
-const calculateWinner = (squares) => {
-    const lines = [
-        [0, 1, 2],
-        [3, 4, 5],
-        [6, 7, 8],
-        [0, 3, 6],
-        [1, 4, 7],
-        [2, 5, 8],
-        [0, 4, 8],
-        [2, 4, 6],
-    ]
-
-    for (let [a, b, c] of lines) {
-        if (
-            squares[a] &&
-            squares[a] === squares[b] &&
-            squares[a] === squares[c]
-        ) {
-            return squares[a]
+        if (move !== undefined) {
+          const newSquares = [...squares]
+          newSquares[move] = "O"
+          setSquares(newSquares)
         }
+
+        setAiThinking(false)
+        setIsPlayerTurn(true)
+      }, 600)
     }
+  }, [isPlayerTurn, squares, difficulty, winner, draw])
 
-    return null
-}
+  // ======================
+  // RESET
+  // ======================
+  const resetGame = () => {
+    setSquares(Array(9).fill(null))
+    setIsPlayerTurn(true)
+    setAiThinking(false)
+  }
 
-const isDraw = (squares) => {
-    return squares.every(square => square !== null)
-}
+  return (
+    <div className="jogo">
+      {/* DIFICULDADE */}
+      <div className="status">
+        <label>Dificuldade: </label>
+        <select value={difficulty} onChange={(e) => setDifficulty(e.target.value)}>
+          <option value="easy">Fácil</option>
+          <option value="medium">Médio</option>
+          <option value="hard">Difícil</option>
+        </select>
+      </div>
 
-const checkWinner = (squares, player) => {
-    const lines = [
-        [0, 1, 2],
-        [3, 4, 5],
-        [6, 7, 8],
-        [0, 3, 6],
-        [1, 4, 7],
-        [2, 5, 8],
-        [0, 4, 8],
-        [2, 4, 6],
-    ]
+      {/* STATUS */}
+      <div className="status-jogo">
+        {winner && <span className="winner">Vencedor: {winner}</span>}
 
-    for (let [a, b, c] of lines) {
-        if (
-            squares[a] === player &&
-            squares[b] === player &&
-            squares[c] === player
-        ) {
-            return true
-        }
-    }
+        {!winner && draw && <span className="draw">Deu velha 😐</span>}
 
-    return false
-}
+        {!winner && !draw && (
+          <span className="status">
+            {aiThinking ? "IA está pensando..." : "Sua vez de jogar"}
+          </span>
+        )}
+      </div>
 
-const aiMove = (squares, setSquare, setIsNext) => {
-    const emptySquares = squares
-        .map((value, index) => (value === null ? index : null))
-        .filter(index => index !== null)
+      {/* TABULEIRO */}
+      <div className="board-row">
+        {squares.map((value, index) => (
+          <Square
+            key={index}
+            value={value}
+            onClick={() => handleClick(index)}
+          />
+        ))}
+      </div>
 
-    let move = null
-
-    
-    for (let i of emptySquares) {
-        const testSquares = squares.slice()
-        testSquares[i] = "O"
-
-        if (checkWinner(testSquares, "O")) {
-            move = i
-            break
-        }
-    }
-
-    
-    if (move === null) {
-        for (let i of emptySquares) {
-            const testSquares = squares.slice()
-            testSquares[i] = "X"
-
-            if (checkWinner(testSquares, "X")) {
-                move = i
-                break
-            }
-        }
-    }
-
-    
-    if (move === null && emptySquares.includes(4)) {
-        move = 4
-    }
-
-    
-    if (move === null) {
-        move =
-            emptySquares[Math.floor(Math.random() * emptySquares.length)]
-    }
-
-    const newSquare = squares.slice()
-    newSquare[move] = "O"
-
-    setSquare(newSquare)
-    setIsNext(true)
+      <button className="reset-button" onClick={resetGame}>
+        Reiniciar
+      </button>
+    </div>
+  )
 }
 
 export default Board
+
+// ======================
+// VERIFICAR VENCEDOR
+// ======================
+const calculateWinner = (squares) => {
+  const lines = [
+    [0,1,2],[3,4,5],[6,7,8],
+    [0,3,6],[1,4,7],[2,5,8],
+    [0,4,8],[2,4,6]
+  ]
+
+  for (let [a,b,c] of lines) {
+    if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
+      return squares[a]
+    }
+  }
+  return null
+}
+
+// ======================
+// IA FÁCIL
+// ======================
+const aiEasyMove = (squares) => {
+  const empty = squares
+    .map((v, i) => (v === null ? i : null))
+    .filter(v => v !== null)
+
+  return empty[Math.floor(Math.random() * empty.length)]
+}
+
+// ======================
+// IA MÉDIA
+// ======================
+const aiMediumMove = (squares) => {
+  const empty = squares
+    .map((v, i) => (v === null ? i : null))
+    .filter(v => v !== null)
+
+  // ganhar
+  for (let i of empty) {
+    const test = [...squares]
+    test[i] = "O"
+    if (calculateWinner(test) === "O") return i
+  }
+
+  // bloquear
+  for (let i of empty) {
+    const test = [...squares]
+    test[i] = "X"
+    if (calculateWinner(test) === "X") return i
+  }
+
+  // centro
+  if (empty.includes(4)) return 4
+
+  return empty[Math.floor(Math.random() * empty.length)]
+}
+
+// ======================
+// IA DIFÍCIL (MINIMAX)
+// ======================
+const aiHardMove = (squares) => {
+  let bestScore = -Infinity
+  let move
+
+  squares.forEach((cell, i) => {
+    if (cell === null) {
+      squares[i] = "O"
+      const score = minimax(squares, 0, false)
+      squares[i] = null
+
+      if (score > bestScore) {
+        bestScore = score
+        move = i
+      }
+    }
+  })
+
+  return move
+}
+
+const minimax = (board, depth, isMax) => {
+  const winner = calculateWinner(board)
+
+  if (winner === "O") return 10 - depth
+  if (winner === "X") return depth - 10
+  if (board.every(s => s !== null)) return 0
+
+  if (isMax) {
+    let best = -Infinity
+    board.forEach((cell, i) => {
+      if (cell === null) {
+        board[i] = "O"
+        best = Math.max(best, minimax(board, depth + 1, false))
+        board[i] = null
+      }
+    })
+    return best
+  } else {
+    let best = Infinity
+    board.forEach((cell, i) => {
+      if (cell === null) {
+        board[i] = "X"
+        best = Math.min(best, minimax(board, depth + 1, true))
+        board[i] = null
+      }
+    })
+    return best
+  }
+}
