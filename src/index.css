@@ -13,11 +13,13 @@ html, body {
 .App {
   padding: 24px 20px;
   border-radius: 28px;
-  background: linear-gradient(180deg, #1e90ff, #1565c0);
-  box-shadow: 0 20px 40px rgba(0,0,0,0.45);
+  box-shadow: 0 20px 40px rgba(0,0,0,2);
   max-width: 95vw;
 }
 
+h1{
+    color: #fff;
+}
 
 .status {
   margin-bottom: 20px;
@@ -30,7 +32,7 @@ html, body {
 }
 
 .winner {
-  background-color: #00ff40;
+  background-color: #ffffff;
   color: #000;
   padding: 8px 14px;
   border-radius: 20px;
